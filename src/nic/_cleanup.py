@@ -28,7 +28,7 @@ def iter_old_files(
     """
     for path in Path(directory).glob("**/*"):
         if path.is_file():
-            if skip and (skip.lower() not in str(path).lower()):
+            if skip and (skip.lower() in str(path).lower()):
                 continue
             last_mod = (TIME - path.stat().st_mtime) / SEC_PER_DAY
             created = (TIME - path.stat().st_ctime) / SEC_PER_DAY
@@ -42,6 +42,6 @@ def iter_empty_dirs(directory: Union[str, Path], skip: str = "") -> Iterator[Pat
         if (
             path.is_dir()
             and not list(path.iterdir())
-            and (not skip or skip.lower() in str(path).lower())
+            and (not skip or skip.lower() not in str(path).lower())
         ):
             yield path
