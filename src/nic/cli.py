@@ -42,7 +42,10 @@ def update() -> None:
     import subprocess
 
     url = "https://github.com/tlambert03/nictool/archive/refs/heads/main.zip"
-    subprocess.run(["pip", "install", "--upgrade", "--force-reinstall", url])
+    subprocess.run(
+        ["pip", "install", "--upgrade", "--force-reinstall", url],
+        stderr=subprocess.DEVNULL,
+    )
 
 
 @app.command()
