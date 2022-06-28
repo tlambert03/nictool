@@ -22,7 +22,7 @@ def _main(
         None, "-v", "--version", callback=_show_version_and_exit
     ),
 ) -> None:
-    """Command line tool for the Nikon Imaging Center at HMS.
+    """🔬 Command line tool for the Nikon Imaging Center at HMS.
 
     v{version}
     """
