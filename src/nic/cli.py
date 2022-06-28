@@ -36,7 +36,16 @@ _main.__doc__ = typer.style(
 )
 
 
-@app.command(options_metavar="")
+@app.command()
+def update() -> None:
+    """Update nictool itself."""
+    import subprocess
+
+    url = "https://github.com/tlambert03/nictool/archive/refs/heads/main.zip"
+    subprocess.run(["pip", "install", "--upgrade", url])
+
+
+@app.command()
 def clean(
     directory: Path = typer.Argument(
         ...,
