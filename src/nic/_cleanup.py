@@ -27,15 +27,21 @@ def iter_old_files(
         Paths to files that are greater than `min_age` days old.
     """
     for path in Path(directory).glob("**/*"):
-        if path.is_file() and (skip not in str(path) if skip else True):
+        if path.is_file():
+            if skip and (skip.lower() not in str(path).lower()):
+                continue
             last_mod = (TIME - path.stat().st_mtime) / SEC_PER_DAY
             created = (TIME - path.stat().st_ctime) / SEC_PER_DAY
             if (days_old := min(last_mod, created)) > min_age:
                 yield path, days_old
 
 
-def iter_empty_dirs(directory: Union[str, Path]) -> Iterator[Path]:
+def iter_empty_dirs(directory: Union[str, Path], skip: str = "") -> Iterator[Path]:
     """Iterate over empty directories nested arbitrarily deep in `directory`."""
     for path in Path(directory).glob("**/*"):
-        if path.is_dir() and not list(path.iterdir()):
+        if (
+            path.is_dir()
+            and not list(path.iterdir())
+            and (not skip or skip.lower() in str(path).lower())
+        ):
             yield path
