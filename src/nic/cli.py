@@ -25,7 +25,7 @@ def _main(
         help="Show version and exit.",
     ),
 ) -> None:
-    """🔬 Command line tool for the Nikon Imaging Center at HMS.
+    """Command line tool for the Nikon Imaging Center at HMS.
 
     v{version}
     """
@@ -88,7 +88,7 @@ def clean(
     # if there are no old files, exit
     if not old_files:
         typer.secho(
-            f"✅ No files found in {directory.name!r} older than {days} days!",
+            f"No files found in {directory.name!r} older than {days} days!",
             fg="green",
             bold=True,
         )
@@ -118,10 +118,10 @@ def clean(
         errs = 0
         try:
             old_file.unlink()
-            typer.secho(f"✅ Deleted {name_age}", fg="green")
+            typer.secho(f"Deleted {name_age}", fg="green")
             count += 1
         except Exception as e:
-            typer.secho(f"❌ Failed to delete {name_age}: {e}", err=True, fg="red")
+            typer.secho(f"Failed to delete {name_age}: {e}", err=True, fg="red")
             errs += 1
 
     if delete_empty_dirs:
@@ -132,7 +132,7 @@ def clean(
                 typer.secho(f"📂 Deleted empty directory {empty}", fg="green")
             except Exception as e:
                 typer.secho(
-                    f"❌ Failed to delete empty directory {empty}: {e}",
+                    f"Failed to delete empty directory {empty}: {e}",
                     err=True,
                     fg="red",
                 )
@@ -141,9 +141,9 @@ def clean(
 
     # print summary and exit
     if count:
-        typer.secho(f"✅ Deleted {count} files", fg="green", bold=True)
+        typer.secho(f"Deleted {count} files", fg="green", bold=True)
     if errs:
-        typer.secho(f"❌ Unabled to delete {errs} files.", fg="red", bold=True)
+        typer.secho(f"Unabled to delete {errs} files.", fg="red", bold=True)
     raise typer.Exit(1 if errs else 0)
 
 
