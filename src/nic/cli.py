@@ -66,6 +66,7 @@ def clean(
         help="Delete without confirmation (otherwise a prompt is shown with "
         "the number of files that would be deleted)",
     ),
+    delete_empty_dirs: bool = typer.Option(True, help="Delete empty directories."),
     skip: str = typer.Option("delete", help="Don't delete files with this string."),
 ) -> None:
     """✨ Delete files in a given directory older than a certain age."""
@@ -110,6 +111,21 @@ def clean(
         except Exception as e:
             typer.secho(f"❌ Failed to delete {name_age}: {e}", err=True, fg="red")
             errs += 1
+
+    if delete_empty_dirs:
+        typer.secho("---------------------------------------", fg=(110, 110, 110))
+        for empty in nic.iter_empty_dirs(directory, skip=skip):
+            try:
+                empty.rmdir()
+                typer.secho(f"📂 Deleted empty directory {empty}", fg="green")
+            except Exception as e:
+                typer.secho(
+                    f"❌ Failed to delete empty directory {empty}: {e}",
+                    err=True,
+                    fg="red",
+                )
+
+    typer.secho("---------------------------------------", fg=(160, 160, 160))
 
     # print summary and exit
     if count:
