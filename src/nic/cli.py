@@ -81,7 +81,7 @@ def clean(
     delete_empty_dirs: bool = typer.Option(True, help="Delete empty directories."),
     skip: str = typer.Option("delete", help="Don't delete files with this string."),
 ) -> None:
-    """✨ Delete files in a given directory older than a certain age."""
+    """Delete files in a given directory older than a certain age."""
     # grab list of old files
     old_files = list(nic.iter_old_files(directory, days, skip=skip))
 
