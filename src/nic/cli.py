@@ -11,7 +11,7 @@ STATE = {"verbose": False}
 
 def _show_version_and_exit(value: bool) -> None:
     if value:
-        typer.echo(f"nic v{nic.__version__}")
+        typer.echo(f"nictool v{nic.__version__}")
         raise typer.Exit()
 
 

@@ -103,6 +103,3 @@ ENV/
 
 # IDE settings
 .vscode/
-
-nic/_version.py
-src/nic/_version.py
