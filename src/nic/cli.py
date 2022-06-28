@@ -47,6 +47,9 @@ def update() -> None:
         stderr=subprocess.DEVNULL,
     )
 
+def install(cmd: str) -> None:
+    """Install a package."""
+    
 
 @app.command()
 def clean(
