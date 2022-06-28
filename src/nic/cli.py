@@ -17,21 +17,23 @@ def _show_version_and_exit(value: bool) -> None:
 
 @app.callback()
 def _main(
-    verbose: bool = False,
     version: Optional[bool] = typer.Option(
-        None, "-v", "--version", callback=_show_version_and_exit
+        None,
+        "-v",
+        "--version",
+        callback=_show_version_and_exit,
+        help="Show version and exit.",
     ),
 ) -> None:
     """🔬 Command line tool for the Nikon Imaging Center at HMS.
 
     v{version}
     """
-    if verbose:
-        typer.echo("Will write verbose output")
-        STATE["verbose"] = True
 
 
-_main.__doc__ = (_main.__doc__ or "").format(version=nic.__version__)
+_main.__doc__ = typer.style(
+    (_main.__doc__ or "").format(version=nic.__version__), fg="bright_yellow"
+)
 
 
 @app.command(options_metavar="")
@@ -66,7 +68,7 @@ def clean(
     ),
     skip: str = typer.Option("delete", help="Don't delete files with this string."),
 ) -> None:
-    """Delete files in a given directory greater than a certain age."""
+    """✨ Delete files in a given directory older than a certain age."""
     # grab list of old files
     old_files = list(nic.iter_old_files(directory, days, skip=skip))
 
