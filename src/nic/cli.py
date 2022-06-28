@@ -41,6 +41,8 @@ def update() -> None:
     """Update nictool itself."""
     import subprocess
 
+    subprocess.run(["pip", "uninstall", "-y", "-q", "nictool"])
+
     url = "https://github.com/tlambert03/nictool/archive/refs/heads/main.zip"
     subprocess.run(["pip", "install", "--upgrade", url])
 
