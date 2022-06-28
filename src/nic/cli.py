@@ -72,6 +72,7 @@ def clean(
     # grab list of old files
     old_files = list(nic.iter_old_files(directory, days, skip=skip))
 
+    breakpoint()
     # if there are no old files, exit
     if not old_files:
         typer.secho(

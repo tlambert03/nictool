@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Iterator, Tuple, Union
 
 SEC_PER_DAY = 60 * 60 * 24
-TIME = time.time()
+NOW = time.time()
 
 
 def iter_old_files(
@@ -26,10 +26,11 @@ def iter_old_files(
     Iterator[Path]
         Paths to files that are greater than `min_age` days old.
     """
-    for path in Path(directory).glob("**/*"):
+    breakpoint()
+    for path in Path(directory).glob("*"):
         if path.is_file() and (skip not in str(path) if skip else True):
-            last_mod = (TIME - path.stat().st_mtime) / SEC_PER_DAY
-            created = (TIME - path.stat().st_ctime) / SEC_PER_DAY
+            last_mod = (NOW - path.stat().st_mtime) / SEC_PER_DAY
+            created = (NOW - path.stat().st_ctime) / SEC_PER_DAY
             if (days_old := min(last_mod, created)) > min_age:
                 yield path, days_old
 
