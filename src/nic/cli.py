@@ -50,13 +50,9 @@ def update() -> None:
 
 @app.command()
 def clean(
-    directory: Path = typer.Argument(
+    directory: str = typer.Argument(
         ...,
         help="The directory to cleanup",
-        exists=True,
-        file_okay=False,
-        writable=True,
-        resolve_path=True,
     ),
     days: float = typer.Option(
         60,
@@ -81,70 +77,98 @@ def clean(
     delete_empty_dirs: bool = typer.Option(True, help="Delete empty directories."),
     skip: str = typer.Option("delete", help="Don't delete files with this string."),
 ) -> None:
-    """Delete files in a given directory older than a certain age."""
-    # grab list of old files
-    old_files = list(nic.iter_old_files(directory, days, skip=skip))
+    """✨ Delete files in a given directory older than a certain age."""
+    context = None
+    if directory.startswith("smb://"):
+        from nic.remote import mount_smb
 
-    # if there are no old files, exit
-    if not old_files:
-        typer.secho(
-            f"No files found in {directory.name!r} older than {days} days!",
-            fg="green",
-            bold=True,
-        )
-        raise typer.Exit(0)
+        server, *rest = directory[6:].split("/")
+        share = rest[0] if rest else "data"
+        user = "Admin"
+        if "@" in server:
+            user, server = server.split("@")
+        if ":" in user:
+            raise ValueError("Usernames with ':' are not supported")
 
-    # if dry_run, just print what would be deleted
-    if dry_run:
+        context = mount_smb(server, share, user)
+        _directory = Path(context.__enter__())
+        typer.secho("loaded remote directory")
+    else:
+        _directory = Path(directory).resolve()
+        if not _directory.is_dir():
+            if _directory.exists():
+                typer.secho(f"Path is not a directory: {directory!r}", fg="red")
+            else:
+                typer.secho(f"Directory does not exist: {directory!r}", fg="red")
+            raise typer.Exit(0)
+
+    try:
+        # grab list of old files
+        old_files = list(nic.iter_old_files(_directory, days, skip=skip))
+
+        # if there are no old files, exit
+        if not old_files:
+            typer.secho(
+                f"No files found in {directory!r} older than {days} days!",
+                fg="green",
+                bold=True,
+            )
+            raise typer.Exit(0)
+
+        # if dry_run, just print what would be deleted
+        if dry_run:
+            for old_file, age in old_files:
+                name_age = f"{old_file} ({age:.1f} days old)"
+                typer.secho(f"Would delete {name_age}", fg=(140, 140, 140))
+            raise typer.Exit(0)
+
+        # if force was not specified, ask for confirmation
+        if not force:
+            msg = typer.style(
+                f"This will delete {len(old_files)} files (use '--dry-run' to show them"
+                "). Are you sure?",
+                fg=typer.colors.BRIGHT_MAGENTA,
+                bold=True,
+            )
+            typer.confirm(msg, abort=True)
+
+        # actually delete files
         for old_file, age in old_files:
             name_age = f"{old_file} ({age:.1f} days old)"
-            typer.secho(f"Would delete {name_age}", fg=(140, 140, 140))
-        raise typer.Exit(0)
-
-    # if force was not specified, ask for confirmation
-    if not force:
-        msg = typer.style(
-            f"This will delete {len(old_files)} files (use '--dry-run' to show them). "
-            "Are you sure?",
-            fg=typer.colors.BRIGHT_MAGENTA,
-            bold=True,
-        )
-        typer.confirm(msg, abort=True)
-
-    # actually delete files
-    for old_file, age in old_files:
-        name_age = f"{old_file} ({age:.1f} days old)"
-        count = 0
-        errs = 0
-        try:
-            old_file.unlink()
-            typer.secho(f"Deleted {name_age}", fg="green")
-            count += 1
-        except Exception as e:
-            typer.secho(f"Failed to delete {name_age}: {e}", err=True, fg="red")
-            errs += 1
-
-    if delete_empty_dirs:
-        typer.secho("---------------------------------------", fg=(110, 110, 110))
-        for empty in nic.iter_empty_dirs(directory, skip=skip):
+            count = 0
+            errs = 0
             try:
-                empty.rmdir()
-                typer.secho(f"📂 Deleted empty directory {empty}", fg="green")
+                old_file.unlink()
+                typer.secho(f"Deleted {name_age}", fg="green")
+                count += 1
             except Exception as e:
-                typer.secho(
-                    f"Failed to delete empty directory {empty}: {e}",
-                    err=True,
-                    fg="red",
-                )
+                typer.secho(f"Failed to delete {name_age}: {e}", err=True, fg="red")
+                errs += 1
 
-    typer.secho("---------------------------------------", fg=(160, 160, 160))
+        if delete_empty_dirs:
+            typer.secho("---------------------------------------", fg=(110, 110, 110))
+            for empty in nic.iter_empty_dirs(_directory, skip=skip):
+                try:
+                    empty.rmdir()
+                    typer.secho(f"📂 Deleted empty directory {empty}", fg="green")
+                except Exception as e:
+                    typer.secho(
+                        f"Failed to delete empty directory {empty}: {e}",
+                        err=True,
+                        fg="red",
+                    )
 
-    # print summary and exit
-    if count:
-        typer.secho(f"Deleted {count} files", fg="green", bold=True)
-    if errs:
-        typer.secho(f"Unabled to delete {errs} files.", fg="red", bold=True)
-    raise typer.Exit(1 if errs else 0)
+        typer.secho("---------------------------------------", fg=(160, 160, 160))
+
+        # print summary and exit
+        if count:
+            typer.secho(f"Deleted {count} files", fg="green", bold=True)
+        if errs:
+            typer.secho(f"Unabled to delete {errs} files.", fg="red", bold=True)
+        raise typer.Exit(1 if errs else 0)
+    finally:
+        if context:
+            context.__exit__(None, None, None)
 
 
 def main() -> None:
