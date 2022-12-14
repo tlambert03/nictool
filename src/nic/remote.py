@@ -8,6 +8,32 @@ from getpass import getpass
 from typing import Iterator
 from urllib.parse import quote
 
+# To add an SMB share for an NIC microscope:
+# - right click on the folder you want to share: (e.g. User Data)
+# - click Properties
+# - click Sharing tab
+# - click Advanced Sharing ...
+# - check Share this folder
+# - change the share name to "data"
+# - click Permissions
+# - remove "Everyone" from the list
+# - click Add
+# - type "Admin" in the box
+# - click Check Names
+# - click OK
+# - click Allow Full Control
+# - click Apply
+# - click OK
+# - confirm that the share path looks something like \\NIC-1234\data
+
+#
+# - go to programs and features
+# - click Turn Windows features on or off
+# - check SMB 1.0/CIFS File Sharing Support
+
+# tip for windows 7
+# Netloon Service (NP-in needs to be enabled in Advanced Windows Firewall settings)
+
 
 @contextmanager
 def mount_smb(

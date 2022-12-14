@@ -52,7 +52,11 @@ def update() -> None:
 def clean(
     directory: str = typer.Argument(
         ...,
-        help="The directory to cleanup",
+        help="The directory to cleanup. May be a local path or an smb:// path."
+        "If an smb:// path, the user name will default to 'Admin', unless it is "
+        "specified in the path (e.g. 'Admin@server'). It is recommended to set "
+        "the password as an eviornment variable: NIC_PASSWORD='mypassword'. "
+        "For example: NIC_PASSWORD='mypassword' nic clean smb://Admin@10.10.10.10/share",
     ),
     days: float = typer.Option(
         60,
@@ -102,6 +106,7 @@ def clean(
                 typer.secho(f"Directory does not exist: {directory!r}", fg="red")
             raise typer.Exit(0)
 
+    print(f"cleaninig directory: {directory!r}")
     try:
         # grab list of old files
         old_files = list(nic.iter_old_files(_directory, days, skip=skip))
@@ -169,6 +174,55 @@ def clean(
     finally:
         if context:
             context.__exit__(None, None, None)
+
+
+@app.command()
+def clean_many(
+    ip_file: Path = typer.Argument(
+        ..., dir_okay=False, file_okay=True, resolve_path=True, exists=True
+    ),
+    force: bool = typer.Option(
+        False,
+        "-f",
+        "--force",
+        help="Delete without confirmation (otherwise a prompt is shown with "
+        "the number of files that would be deleted)",
+    ),
+) -> None:
+    r"""Clean many directories at once from json file.
+
+    File should be a single object, with station names as keys and IP addresses
+    as values.
+
+    Example:
+    nic clean-many ~/Dropbox\ \(HMS\)/NIC\ Team/Equipment/stations_ips.json
+    """
+    import json
+    from concurrent.futures import ThreadPoolExecutor
+
+    if ip_file.suffix != ".json":
+        raise typer.BadParameter("File must have .json extension")
+
+    with open(ip_file) as f:
+        data = json.load(f)
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        args = [
+            (f"smb://{ip}/data", 60, False, force, True, "delete")
+            for _, ip in data.items()
+            if ip is not None
+        ]
+        list(pool.map(_try_clean, args))
+
+
+def _try_clean(args: tuple) -> None:
+    """Wrap clean in a try catch for multithreading."""
+    try:
+        clean(*args)
+    except Exception as e:
+        if isinstance(e, typer.Exit) and e.exit_code == 0:
+            return
+        typer.secho(f"Failed to clean {args[0]}: {e}", fg="red")
 
 
 def main() -> None:
